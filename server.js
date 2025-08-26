@@ -9,12 +9,10 @@ require('dotenv').config();
 const app = express();
 const port = 3000;
 
-// Initialize OpenAI (will use environment variable)
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || 'your-openai-api-key-here'
 });
 
-// Initialize SQLite database
 const db = new sqlite3.Database('./suhani.db', (err) => {
     if (err) {
         console.error('Error opening database:', err);
@@ -24,24 +22,20 @@ const db = new sqlite3.Database('./suhani.db', (err) => {
     }
 });
 
-// Initialize database tables
 function initializeDatabase() {
     db.serialize(() => {
-        // Reminders table
         db.run(`CREATE TABLE IF NOT EXISTS reminders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             reminder TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Feedback table
         db.run(`CREATE TABLE IF NOT EXISTS feedback (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             feedback TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Command history table
         db.run(`CREATE TABLE IF NOT EXISTS command_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             command TEXT NOT NULL,
@@ -49,7 +43,6 @@ function initializeDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Preferences table
         db.run(`CREATE TABLE IF NOT EXISTS preferences (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key TEXT UNIQUE NOT NULL,
@@ -60,12 +53,10 @@ function initializeDatabase() {
     });
 }
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('.')); // Serve static files
+app.use(express.static('.'));
 
-// Enhanced AI query endpoint with OpenAI integration
 app.post('/api/query', async (req, res) => {
     const { message } = req.body;
     
@@ -74,10 +65,8 @@ app.post('/api/query', async (req, res) => {
     }
 
     try {
-        // Save command to history
         db.run('INSERT INTO command_history (command) VALUES (?)', [message]);
 
-        // Use OpenAI for intelligent responses
         if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your-openai-api-key-here') {
             const completion = await openai.chat.completions.create({
                 model: "gpt-3.5-turbo",
@@ -97,12 +86,10 @@ app.post('/api/query', async (req, res) => {
 
             const aiResponse = completion.choices[0].message.content;
             
-            // Update command history with AI response
             db.run('UPDATE command_history SET response = ? WHERE id = (SELECT MAX(id) FROM command_history)', [aiResponse]);
             
             return res.json({ response: aiResponse });
         } else {
-            // Fallback responses if OpenAI is not configured
             const fallbackResponses = {
                 'hello': "Hello! I'm SuhaniQ, your AI assistant. How can I help you today?",
                 'hey': "Hey there! What can I do for you?",
@@ -132,7 +119,6 @@ app.post('/api/query', async (req, res) => {
     }
 });
 
-// Enhanced reminders endpoints
 app.post('/api/reminders', (req, res) => {
     const { reminder } = req.body;
     
@@ -146,7 +132,6 @@ app.post('/api/reminders', (req, res) => {
             return res.status(500).json({ success: false, message: 'Failed to add reminder' });
         }
         
-        // Get all reminders
         db.all('SELECT reminder FROM reminders ORDER BY created_at DESC', (err, rows) => {
             if (err) {
                 console.error('Error fetching reminders:', err);
@@ -171,7 +156,6 @@ app.get('/api/reminders', (req, res) => {
     });
 });
 
-// Enhanced feedback endpoint
 app.post('/api/feedback', (req, res) => {
     const { feedback } = req.body;
     
@@ -189,9 +173,6 @@ app.post('/api/feedback', (req, res) => {
     });
 });
 
-// New endpoints for additional features
-
-// Get command history
 app.get('/api/history', (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     
@@ -205,10 +186,8 @@ app.get('/api/history', (req, res) => {
     });
 });
 
-// Weather endpoint (mock implementation)
 app.get('/api/weather', async (req, res) => {
     try {
-        // Create weather data and use JSON.stringify to ensure proper formatting
         const weatherData = {
             location: "Your Location",
             temperature: 72,
@@ -222,10 +201,8 @@ app.get('/api/weather', async (req, res) => {
     }
 });
 
-// News endpoint (mock implementation)
 app.get('/api/news', async (req, res) => {
     try {
-        // Mock news data
         const mockNewsData = [
             { title: "Latest technology developments", description: "New advancements in AI technology." },
             { title: "Current world events", description: "Updates on global affairs." },
@@ -237,7 +214,6 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
-// System info endpoint
 app.get('/api/system', (req, res) => {
     res.json({
         status: 'online',
@@ -247,23 +223,19 @@ app.get('/api/system', (req, res) => {
     });
 });
 
-// Serve the main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
     res.status(500).json({ error: 'Internal server error' });
 });
 
-// 404 handler
 app.use((req, res) => {
     res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Graceful shutdown
 process.on('SIGINT', () => {
     console.log('\nShutting down gracefully...');
     db.close((err) => {
