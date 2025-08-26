@@ -15,7 +15,7 @@ const openai = new OpenAI({
 });
 
 // Initialize SQLite database
-const db = new sqlite3.Database('./nova.db', (err) => {
+const db = new sqlite3.Database('./suhani.db', (err) => {
     if (err) {
         console.error('Error opening database:', err);
     } else {
