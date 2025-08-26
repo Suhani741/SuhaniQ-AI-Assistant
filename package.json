@@ -1,0 +1,25 @@
+{
+  "name": "virtual-assistant",
+  "version": "1.0.0",
+  "description": "Advanced AI Virtual Assistant with voice recognition",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "sqlite3": "^5.1.6",
+    "openai": "^4.20.1",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["ai", "virtual-assistant", "voice-recognition", "openai"],
+  "author": "Ayush Sir",
+  "license": "MIT"
+}
